@@ -1,5 +1,3 @@
-package iut.unb.game;
-
 import java.util.List;
 
 /**

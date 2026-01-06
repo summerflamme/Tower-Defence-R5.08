@@ -1,6 +1,5 @@
-package iut.unb.game;
-
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.util.LinkedList;
 import java.util.List;
 

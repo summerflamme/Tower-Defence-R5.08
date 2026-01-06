@@ -1,6 +1,5 @@
-package iut.unb.game;
-
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
 
 /**
  * This is an abstract superclass for an enemy in the game

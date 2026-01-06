@@ -1,8 +1,7 @@
-package iut.unb.game;
-
-import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+
+import javax.swing.JApplet;
 
 public class Panel extends JApplet implements MouseListener
 {
