@@ -441,10 +441,10 @@ public class Game implements Runnable {
         {
             g.drawImage(endGame, 0, 0, null);						// draw "game over"
         }
-        if (killsCounter >= 500) // if game is lost
+        if (killsCounter >= killsToReach) // if game is won
         {
             g.setFont(new Font("Braggadocio", Font.ITALIC, 90));
-            g.drawString("You Win!!!", 10, 250);					// draw "game over"
+            g.drawString("You Win!!!", 10, 250);					// draw "You Win!!!"
         }
 
         // Drawing is now complete.  Enter the WAIT state to create a small
