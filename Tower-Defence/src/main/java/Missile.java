@@ -2,31 +2,29 @@
 import java.util.List;
 
 /**
- * This class creates a single sun tower
+ * This class creates a single missile tower
  */
-public class Sun extends Tower {
+public class Missile extends Tower {
 
     /**
      * Constructor
      */
-    public Sun(Coordinate pos) {
+    public Missile(Coordinate pos) {
         ImageLoader loader = ImageLoader.getLoader();
-        this.tower = loader.getImage("sun.png");
+        this.tower = loader.getImage("missile.png");
         this.position = pos;
-        this.anchorX = -50;
-        this.anchorY = -50;
+        this.anchorX = -40;
+        this.anchorY = -40;
     }
 
     /**
      *
      */
-    public void interact(Game game, double deltaTime) {
-
-        // tracks time that effect has existed
+    public void interact(Game game, double deltaTime) {	// tracks time that effect has existed
         timeSinceLastFire += deltaTime;
 
         // if time less than 1.5 seconds, don't interact
-        if (timeSinceLastFire < .2) {
+        if (timeSinceLastFire < 1) {
             return;
         }
 
@@ -34,6 +32,7 @@ public class Sun extends Tower {
 
         // Gives position of an enemy in enemy list
         for (Enemy e : enemies) {
+
             // holds position of enemy
             Coordinate enemyPos = e.getPosition().getCoordinate();
 
@@ -50,10 +49,10 @@ public class Sun extends Tower {
             // holds position of effect
             Coordinate pos = new Coordinate(position.x, position.y);
 
-            // if enemy is in range, fire salt
-            if (dist < 100) {
-                SunSpot sunspot = new SunSpot(pos, enemyPos);
-                game.effects.add(sunspot);
+            // if enemy is in range, fire flamme
+            if (dist < 200) {
+                Flamme flamme = new Flamme(pos, enemyPos);
+                game.effects.add(flamme);
                 timeSinceLastFire = 0;
                 return;
             }

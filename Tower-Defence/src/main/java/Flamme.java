@@ -1,13 +1,13 @@
 
 /**
- * Game effect when the Black hole attacks
+ * Game effect when the Missile attacks
  */
-public class StarDust extends Effect {
+public class Flamme extends Effect {
 
-    public StarDust(Coordinate pos, Coordinate target) {
-        // Loads star dust image
+    public Flamme(Coordinate pos, Coordinate target) {
+        // Loads flamme image
         ImageLoader loader = ImageLoader.getLoader();
-        this.picture = loader.getImage("star_dust.png");
+        this.picture = loader.getImage("flamme.png");
 
         // X and Y position of Effect
         this.posX = pos.x;
