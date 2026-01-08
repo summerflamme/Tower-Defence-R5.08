@@ -11,9 +11,9 @@ import javax.swing.JOptionPane;
 /**
  * This 'enum' just creates a new type of data (like int or char).
  * The type is 'GameState', and the legal values are shown below.
- * We can create variables of this type, and we can store the 
+ * We can create variables of this type, and we can store the
  * values shown below into those variables.
- * 
+ *
  * The alternative would have been to use integers to represent states.
  * For example, we could have said 0=setup, 1=update, etc.  I don't like
  * using integers in this way because I would have to remember what
@@ -26,10 +26,10 @@ enum GameState { SETUP, UPDATE, DRAW, WAIT, END }
  * This class represents the playable game.  If you create an
  * object from this class, you have created an instance of the
  * game, complete with JFrame, panel, etc.
- * 
+ *
  * The class also has a main method so that the class can
  * be run as an application.
- * 
+ *
  * @author basilvetas
  */
 public class Game implements Runnable
@@ -38,7 +38,7 @@ public class Game implements Runnable
     
     /**
      * The entry point for the game.
-     * 
+     *
      * @param args not used
      */
     public static void main (String[] args)
@@ -47,17 +47,17 @@ public class Game implements Runnable
         //   will do the rest of the work.
         
         new Game ();
-          
+    
         // Main exits, but our other thread of execution
         //   will keep going.  We could do other work here if
         //   needed.
     }
     
     /* Object fields and methods */
-    private Image backdrop;				// background star image		
+    private Image backdrop;				// background star image
     private PathPoints line;			// path coordinates
     
-    private GamePanel gamePanel;		// gamePanel object 
+    private GamePanel gamePanel;		// gamePanel object
     private GameState state;	   		// The current game state
     
     private int frameCounter;			// keeps track of frame updates
@@ -75,6 +75,7 @@ public class Game implements Runnable
     int livesCounter; 					// counter for lives left
     int scoreCounter;					// points the user earns
     int killsCounter;					// number of enemies destroyed
+    int killsToReach;					// number of enemies to stop to win
     
     /* create enemies */
     List<Enemy> enemies;				// list of enemy objects
@@ -94,7 +95,7 @@ public class Game implements Runnable
      * on 'this' object.  This extra thread of execution will be
      * responsible for doing all the work of creating, running,
      * and playing the game.
-     * 
+     *
      * (Note:  Drawing the screen happens inside of -another-
      * thread of execution controlled by Java.  Fortunately, we
      * don't care, but we are aware that some other threads
@@ -181,32 +182,55 @@ public class Game implements Runnable
         // Do setup tasks
         // Create the JFrame and the JPanel
         JFrame f = new JFrame();
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setTitle("Basil Vetas's Tower Defense Game");
         f.setContentPane(gamePanel);
         f.pack();
-        f.setVisible(true); 
+        f.setVisible(true);
         
     	// creates a new ImageLoader object and loads the background image
 		ImageLoader loader = ImageLoader.getLoader();
         backdrop = loader.getImage("stars.jpg");
-        
+
+        String[] options = {"Easy", "Normal", "Hard"};
+        int difficulty = JOptionPane.showOptionDialog(null, "Choose difficulty level:", "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+
+        switch (difficulty) {
+            case 0 -> {
+                // Easy difficulty
+                livesCounter = 20;
+                scoreCounter = 400;
+                killsToReach = 250;
+            }
+            case 1 -> {
+                // Normal difficulty
+                livesCounter = 10;      // gives the player 10 lives
+                scoreCounter = 200;     // give the user 200 points to begin
+                killsToReach = 500;     // player must stop 500 enemies to win
+            }
+            case 2 -> {
+                // Hard difficulty
+                livesCounter = 5;
+                scoreCounter = 100;
+                killsToReach = 1000;
+            }
+            default -> throw new AssertionError();
+        }
+
         JOptionPane.showMessageDialog(null,  "Rules of the game:\n" +
         		"1. Place towers on the map to stop enemies from reaching the Earth.\n" +
         		"2. Black holes shoot star dust and are cheaper, Suns shoot sun spots and are faster.\n" +
         		"3. You earn money for stopping enemies, but as the game progresses, new enemies attack.\n" +
-        		"4. If you stop 500 enemies you win, but if you lose 10 lives the game is over.");
+        		"4. If you stop " + killsToReach + " enemies you win, but if you lose " + livesCounter + " lives the game is over.");
         
         // fill counters
-        livesCounter = 10;		// gives the player 10 lives
-        scoreCounter = 200;		// give the user 500 points to begin
         killsCounter = 0;		// begin with 0 kills
         
-        // Reset the frame counter and time 
+        // Reset the frame counter and time
         frameCounter = 0;
         lastTime = System.currentTimeMillis();
         
-        // Use the loader to build a scanner on the path data text file, then build the 
+        // Use the loader to build a scanner on the path data text file, then build the
         // path points object from the data in the file.
 		ClassLoader myLoader = this.getClass().getClassLoader();
         InputStream pointStream = myLoader.getResourceAsStream("path_1.txt");
@@ -245,7 +269,7 @@ public class Game implements Runnable
      * function is responsible for the 'physics' of the game.
      */
     private void doUpdateTasks()
-    {	
+    {
     	if(gameIsOver)
     	{	state = GameState.DRAW;
     		return;
@@ -265,21 +289,21 @@ public class Game implements Runnable
         
     	// for each tower, interact in this game
     	for(Tower t: new LinkedList<Tower>(towers))
-    	{	
+    	{
     		t.interact(this, elapsedTime);
     		
     	}
-        // for each effect, interact in this game      
+        // for each effect, interact in this game
     	for(Effect e: new LinkedList<Effect>(effects))
-    	{	
+    	{
     		e.interact(this, elapsedTime);
     		if(e.isDone())
-    			effects.remove(e);	// add to list that has reached the end	
+    			effects.remove(e);	// add to list that has reached the end
     	}
     	
     	// Advance each enemy on the path.
     	for(Enemy e: new LinkedList<Enemy>(enemies))
-    	{	
+    	{
     		e.advance();
      		if(e.getPosition().isAtTheEnd())
     		{
@@ -292,7 +316,7 @@ public class Game implements Runnable
         // Fill elements in an enemy list
         this.generateEnemies();
         
-    	// increments frame counter 
+    	// increments frame counter
     	frameCounter++;
     	
     	// Place towers if user chooses
@@ -304,16 +328,16 @@ public class Game implements Runnable
     		livesCounter = 0;
     	}
     	
-    	if(killsCounter >= 500)
+    	if(killsCounter >= killsToReach)
     	{	gameIsWon = true;
-    		killsCounter = 500;
+    		killsCounter = killsToReach;
     	}
     	
         // After we have updated the objects in the game, we need to
         //   redraw them.  Enter the 'DRAW' state.
         
         state = GameState.DRAW;
-       
+    
         // Careful!  At ANY time after we set this state, the draw method
         //   may execute.  Don't do any further updating.
     }
@@ -331,15 +355,15 @@ public class Game implements Runnable
             return;
         	
         // Draw the background image.
-        g.drawImage(backdrop, 0, 0, null); 
-     
+        g.drawImage(backdrop, 0, 0, null);
+    
         // Draw the path
         g.setColor(new Color (0,76, 153));
         int[] xPos = new int[]{0, 64, 118, 251, 298, 344, 396, 416, 437, 459, 460, 498, 542, 600, 600, 568, 535, 509, 490, 481, 456, 414, 345, 287, 227, 98, 0};
         int[] yPos = new int[]{329, 316, 291, 189, 163, 154, 165, 186, 233, 344, 364, 415, 444, 461, 410, 396, 372, 331, 226, 195, 151, 117, 105, 117, 143, 244, 280};
         g.fillPolygon(xPos, yPos, 27);
         
-        // Draw planet 
+        // Draw planet
         g.setColor(new Color(65,105,225));
         g.fillArc(550, 385, 100, 100, 90, 180);
         g.setColor(Color.GREEN);
@@ -374,11 +398,11 @@ public class Game implements Runnable
         g.drawString("Enemies Stopped: " + killsCounter, 605, 200);
         g.drawString("Blackhole Cost: 100", 610, 380);				// cost for black hole towers
         g.drawString("Sun Cost: 300", 640, 530);					// cost for sun towers
-        g.setFont(new Font("Lucidia Sans", Font.ITALIC, 28));		
+        g.setFont(new Font("Lucidia Sans", Font.ITALIC, 28));
         g.drawString("Planet Defense", 600, 50);					// writes title
         g.drawLine(600, 50, 800, 50);								// underscore
         g.drawString("Towers", 640, 240);							// writes towers
-        g.drawLine(620, 240, 780, 240);								// underscore	
+        g.drawLine(620, 240, 780, 240);								// underscore
         
         // draw box around blackhole icon
         g.setColor(new Color(224, 224, 224));
@@ -404,15 +428,15 @@ public class Game implements Runnable
         if(newSun != null)
         	newSun.draw(g);
         
-        ImageLoader loader = ImageLoader.getLoader();	
+        ImageLoader loader = ImageLoader.getLoader();
 		Image endGame = loader.getImage("game_over.png"); // load game over image
     	
         if(livesCounter <= 0)										// if game is lost
         	g.drawImage(endGame, 0, 0, null);						// draw "game over"
 
-		if(killsCounter >= 500)										// if game is lost
-		{	g.setFont(new Font("Braggadocio", Font.ITALIC, 90));		
-        	g.drawString("You Win!!!", 10, 250);					// draw "game over"
+		if(killsCounter >= killsToReach)										// if game is won
+		{	g.setFont(new Font("Braggadocio", Font.ITALIC, 90));
+        	g.drawString("You Win!!!", 10, 250);					// draw "You Win!!!"
 		}
 		
         // Drawing is now complete.  Enter the WAIT state to create a small
@@ -423,38 +447,38 @@ public class Game implements Runnable
     
     /**
      * Generates a stream of enemies
-     * 
+     *
      */
     public void generateEnemies()
-    {	
+    {
     	// adds enemies to list dependent on how many frames have passed
-    	if(frameCounter % 30 == 0)								// slow 
+    	if(frameCounter % 30 == 0)								// slow
     	{
     		enemies.add(new Asteroid(line.getStart()));
     	}
  		else if(frameCounter % 25 == 0 && frameCounter >= 50)	// slow
  		{
- 			enemies.add(new Asteroid(line.getStart())); 
+ 			enemies.add(new Asteroid(line.getStart()));
  		}
 	 	else if(frameCounter % 20 == 0 && frameCounter >= 100)	// medium
 	 	{
-	 		enemies.add(new Asteroid(line.getStart())); 
+	 		enemies.add(new Asteroid(line.getStart()));
 	 		enemies.add(new Alien(line.getStart()));
 	 	}	
  		else if(frameCounter % 15 == 0 && frameCounter >= 150)	// medium
  		{
- 			enemies.add(new Asteroid(line.getStart())); 
+ 			enemies.add(new Asteroid(line.getStart()));
  			enemies.add(new Alien(line.getStart()));
  		}
 	 	else if(frameCounter % 10 == 0 && frameCounter >= 200)	// fast
 	 	{
-	 		enemies.add(new Asteroid(line.getStart())); 
+	 		enemies.add(new Asteroid(line.getStart()));
 	 		enemies.add(new Alien(line.getStart()));
 	 		enemies.add(new Comet(line.getStart()));
 	 	}
 	 	else if(frameCounter % 5 == 0 && frameCounter >= 250)	// fast
 	 	{
-	 		enemies.add(new Asteroid(line.getStart())); 
+	 		enemies.add(new Asteroid(line.getStart()));
 	 		enemies.add(new Alien(line.getStart()));
 	 		enemies.add(new Comet(line.getStart()));
 	 	}
@@ -471,15 +495,15 @@ public class Game implements Runnable
     	Coordinate mouseLocation = new Coordinate(gamePanel.mouseX, gamePanel.mouseY);
     	
     	// moves the tower object as mouse moves
-    	if(gamePanel.mouseX > 650 && gamePanel.mouseX < 750 && 
-    		gamePanel.mouseY > 250 && gamePanel.mouseY < 350 && 
+    	if(gamePanel.mouseX > 650 && gamePanel.mouseX < 750 &&
+    		gamePanel.mouseY > 250 && gamePanel.mouseY < 350 &&
     		gamePanel.mouseIsPressed && scoreCounter >= 100)
     	{	// if mouse is pressed on tower icon, create a new object
 	    		placingBlackHole = true;
 	    		newBlackHole = new BlackHole(mouseLocation);
     	}    
-    	else if(gamePanel.mouseX > 0 && gamePanel.mouseX < 600 && 
-        	gamePanel.mouseY > 0 && gamePanel.mouseY < 600 && 
+    	else if(gamePanel.mouseX > 0 && gamePanel.mouseX < 600 &&
+        	gamePanel.mouseY > 0 && gamePanel.mouseY < 600 &&
         	gamePanel.mouseIsPressed && placingBlackHole
         	&& line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60)
     	{	// if mouse is pressed on game screen, place tower on game screen
@@ -487,14 +511,14 @@ public class Game implements Runnable
 	    		towers.add(new BlackHole(mouseLocation));
 	    		scoreCounter -= 100;
 	    		newBlackHole = null;
-	    		placingBlackHole = false;	
+	    		placingBlackHole = false;
     	}
     	
     	// moves tower object with mouse movements
     	if(newBlackHole != null)
     	{
     		newBlackHole.setPosition(mouseLocation);
-    	}	
+    	}
     }
     
     /**
@@ -508,15 +532,15 @@ public class Game implements Runnable
     	Coordinate mouseLocation = new Coordinate(gamePanel.mouseX, gamePanel.mouseY);
     	
     	// moves the tower object as mouse moves
-    	if(gamePanel.mouseX > 650 && gamePanel.mouseX < 750 && 
-    		gamePanel.mouseY > 400 && gamePanel.mouseY < 500 && 
+    	if(gamePanel.mouseX > 650 && gamePanel.mouseX < 750 &&
+    		gamePanel.mouseY > 400 && gamePanel.mouseY < 500 &&
     		gamePanel.mouseIsPressed && scoreCounter >= 300)
     	{	// if mouse is pressed on tower icon, create a new object
 	    		placingSun = true;
 	    		newSun = new Sun(mouseLocation);
     	}    
-    	else if(gamePanel.mouseX > 0 && gamePanel.mouseX < 600 && 
-        	gamePanel.mouseY > 0 && gamePanel.mouseY < 600 && 
+    	else if(gamePanel.mouseX > 0 && gamePanel.mouseX < 600 &&
+        	gamePanel.mouseY > 0 && gamePanel.mouseY < 600 &&
         	gamePanel.mouseIsPressed && placingSun
         	&& line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60)
     	{	// if mouse is pressed on game screen, place tower on game screen
@@ -524,13 +548,13 @@ public class Game implements Runnable
 	    		towers.add(new Sun(mouseLocation));
 	    		scoreCounter -= 300;
 	    		newSun = null;
-	    		placingSun = false;	
+	    		placingSun = false;
     	}
     	
     	// moves tower object with mouse movements
     	if(newSun != null)
     	{
     		newSun.setPosition(mouseLocation);
-    	}	
+    	}
     }
-}	
+}
