@@ -53,10 +53,10 @@ public class Game implements Runnable {
     }
 
     /* Object fields and methods */
-    private Image backdrop;				// background star image		
+    private Image backdrop;				// background star image
     private PathPoints line;			// path coordinates
 
-    private GamePanel gamePanel;		// gamePanel object 
+    private GamePanel gamePanel;		// gamePanel object
     private GameState state;	   		// The current game state
 
     private int frameCounter;			// keeps track of frame updates
@@ -78,6 +78,7 @@ public class Game implements Runnable {
     int livesCounter; 					// counter for lives left
     int scoreCounter;					// points the user earns
     int killsCounter;					// number of enemies destroyed
+    int killsToReach;					// number of enemies to stop to win
 
     /* create enemies */
     List<Enemy> enemies;				// list of enemy objects
@@ -178,22 +179,46 @@ public class Game implements Runnable {
         ImageLoader loader = ImageLoader.getLoader();
         backdrop = loader.getImage("stars.jpg");
 
+        String[] options = {"Easy", "Normal", "Hard"};
+        int difficulty = JOptionPane.showOptionDialog(null, "Choose difficulty level:", "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+
+        switch (difficulty) {
+            case 0 -> {
+                // Easy difficulty
+                livesCounter = 20;
+                scoreCounter = 400;
+                killsToReach = 250;
+            }
+            case 1 -> {
+                // Normal difficulty
+                livesCounter = 10;      // gives the player 10 lives
+                scoreCounter = 200;     // give the user 200 points to begin
+                killsToReach = 500;     // player must stop 500 enemies to win
+            }
+            case 2 -> {
+                // Hard difficulty
+                livesCounter = 5;
+                scoreCounter = 100;
+                killsToReach = 1000;
+            }
+            default ->
+                throw new AssertionError();
+        }
+
         JOptionPane.showMessageDialog(null, "Rules of the game:\n"
                 + "1. Place towers on the map to stop enemies from reaching the Earth.\n"
                 + "2. Black holes shoot star dust and are cheaper, Suns shoot sun spots and are faster.\n"
                 + "3. You earn money for stopping enemies, but as the game progresses, new enemies attack.\n"
-                + "4. If you stop 500 enemies you win, but if you lose 10 lives the game is over.");
+                + "4. If you stop " + killsToReach + " enemies you win, but if you lose " + livesCounter + " lives the game is over.");
 
         // fill counters
-        livesCounter = 10;		// gives the player 10 lives
-        scoreCounter = 200;		// give the user 500 points to begin
         killsCounter = 0;		// begin with 0 kills
 
-        // Reset the frame counter and time 
+        // Reset the frame counter and time
         frameCounter = 0;
         lastTime = System.currentTimeMillis();
 
-        // Use the loader to build a scanner on the path data text file, then build the 
+        // Use the loader to build a scanner on the path data text file, then build the
         // path points object from the data in the file.
         ClassLoader myLoader = this.getClass().getClassLoader();
         InputStream pointStream = myLoader.getResourceAsStream("path_1.txt");
@@ -279,7 +304,7 @@ public class Game implements Runnable {
         // Fill elements in an enemy list
         this.generateEnemies();
 
-        // increments frame counter 
+        // increments frame counter
         frameCounter++;
 
         // Place towers if user chooses
@@ -292,9 +317,9 @@ public class Game implements Runnable {
             livesCounter = 0;
         }
 
-        if (killsCounter >= 500) {
+        if (killsCounter >= killsToReach) {
             gameIsWon = true;
-            killsCounter = 500;
+            killsCounter = killsToReach;
         }
 
         // After we have updated the objects in the game, we need to
@@ -433,7 +458,7 @@ public class Game implements Runnable {
      */
     public void generateEnemies() {
         // adds enemies to list dependent on how many frames have passed
-        if (frameCounter % 30 == 0) // slow 
+        if (frameCounter % 30 == 0) // slow
         {
             enemies.add(new Asteroid(line.getStart()));
         } else if (frameCounter % 25 == 0 && frameCounter >= 50) // slow
