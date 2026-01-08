@@ -50,7 +50,7 @@ public class Missile extends Tower {
             Coordinate pos = new Coordinate(position.x, position.y);
 
             // if enemy is in range, fire flamme
-            if (dist < 200) {
+            if (dist < 20) {
                 Flamme flamme = new Flamme(pos, enemyPos);
                 game.effects.add(flamme);
                 timeSinceLastFire = 0;
