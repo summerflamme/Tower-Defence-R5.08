@@ -1,4 +1,5 @@
 package qdev.unb;
+
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -32,11 +33,11 @@ public class StepDefinitions {
 
     ClassLoader myLoader = this.getClass().getClassLoader();
     InputStream pointStream = myLoader.getResourceAsStream("path_1.txt");
-    Scanner s = new Scanner (pointStream);
+    Scanner s = new Scanner(pointStream);
 
     /*
     ======================================================
-    Vérifier que l'alien hérite bien de la classe qdev.unb.entities.Enemy
+        Vérifier que l'alien hérite bien de la classe qdev.unb.entities.Enemy
     ======================================================
      */
     @Given("Un alien est créer")
@@ -60,14 +61,14 @@ public class StepDefinitions {
 
 
     /*
-   ======================================================
-   Vérifier la position de spawn d'un Alien
-   ======================================================
+    ======================================================
+        Vérifier la position de spawn d'un Alien
+    ======================================================
     */
     @When("Je vérifie la position de départ de l'alien")
     public void jeVérifieLaPositionDeDépartDeLAlien() {
         // Write code here that turns the phrase above into concrete actions
-        coord =alien.getPosition().getCoordinate();
+        coord = alien.getPosition().getCoordinate();
     }
 
     @Then("L'alien est bien à la position {int} {int}")
@@ -78,17 +79,15 @@ public class StepDefinitions {
     }
 
     /*
-
-    /*
-   =====================================================
-    l'alien arrive au soleil, le joueur perd 1 vie
-   =====================================================
+    =====================================================
+        l'alien arrive au soleil, le joueur perd 1 vie
+    =====================================================
     */
 
     @When("L'alien arrive en {int} {int}")
     public void lAlienArriveEn(int px, int py) {
         coord = alien.setCoordinate(px, py);
-        game.livesCounter --;
+        game.livesCounter--;
     }
 
 
@@ -99,9 +98,9 @@ public class StepDefinitions {
     }
 
     /*
-   =====================================================
-    Vérifier que la comet hérite bien de la classe qdev.unb.entities.Enemy
-   =====================================================
+    =====================================================
+        Vérifier que la comet hérite bien de la classe qdev.unb.entities.Enemy
+    =====================================================
     */
 
     @Given("Une comète est créer")
@@ -114,8 +113,9 @@ public class StepDefinitions {
     @When("Je vérifie la position de départ de la comet")
     public void jeVérifieLaPositionDeDépartDeLaComet() {
         // Write code here that turns the phrase above into concrete actions
-        coord =comet.getPosition().getCoordinate();
+        coord = comet.getPosition().getCoordinate();
     }
+
     @Then("La comète est bien à la position {int} {int}:")
     public void laComèteEstBienÀLaPosition(int px, int py) {
         // Write code here that turns the phrase above into concrete actions
@@ -124,9 +124,9 @@ public class StepDefinitions {
     }
 
     /*
-   =====================================================
-    Vérifier la position de spawn d'une comète
-   =====================================================
+    =====================================================
+        Vérifier la position de spawn d'une comète
+    =====================================================
     */
 
     @When("Je vérifie le type de la comet")
@@ -143,10 +143,10 @@ public class StepDefinitions {
 
 
     /*
-       =====================================================
+    =====================================================
         Easy mode
-       =====================================================
-        */
+    =====================================================
+    */
     @Given("La partie est lancée en mode {string}")
     public void laPartieEstLancéeEnMode(String mode) {
         game = new Game(false);
@@ -170,16 +170,16 @@ public class StepDefinitions {
 
 
 /*
-       =====================================================
+    =====================================================
         Les 2 tests ont été réalisés avec l'aide de copilot
-       =====================================================
+    =====================================================
  */
 
 /*
-       =====================================================
-         La tour <type> tire quand l'ennemi est à portée
-       =====================================================
-        */
+    =====================================================
+        La tour <type> tire quand l'ennemi est à portée
+    =====================================================
+*/
 
     @Given("Une partie headless pour les tests")
     public void unePartieHeadlessPourLesTests() {
@@ -220,6 +220,7 @@ public class StepDefinitions {
 
         game.enemies.add(a);
     }
+
     @When("La tour interagit avec deltaTime {double}")
     public void laTourInteragitAvecDeltaTime(double dt) {
         if (tower == null) {
@@ -248,16 +249,15 @@ public class StepDefinitions {
             default -> throw new IllegalArgumentException("Type d'effet inconnu: " + effectName);
         }
     }
-    /*
-       =====================================================
-         La tour <type> ne tire pas quand l'ennemi est hors portée
-       =====================================================
-        */
-
+/*
+    =====================================================
+        La tour <type> ne tire pas quand l'ennemi est hors portée
+    =====================================================
+*/
 
     @Then("Aucun effet n'est créé")
     public void aucunEffetNEstCréé() {
-            assertThat(game.effects).isEmpty();
+        assertThat(game.effects).isEmpty();
     }
 }
 
