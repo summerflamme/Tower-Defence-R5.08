@@ -1,4 +1,3 @@
-// java
 package qdev.unb;
 
 public enum Difficulty {

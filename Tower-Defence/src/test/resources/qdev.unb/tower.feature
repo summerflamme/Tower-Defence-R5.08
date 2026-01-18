@@ -1,4 +1,4 @@
-#Test Créer avec copilot
+# tests réalisés avec l'aide de copilot
 
 Feature: Vérifier le comportement des tours
 

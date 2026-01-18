@@ -19,11 +19,12 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 /* The class begins below the enum. */
+
 /**
  * This 'enum' just creates a new type of data (like int or char). The type is
  * 'qdev.unb.GameState', and the legal values are shown below. We can create variables of
  * this type, and we can store the values shown below into those variables.
- *
+ * <p>
  * The alternative would have been to use integers to represent states. For
  * example, we could have said 0=setup, 1=update, etc. I don't like using
  * integers in this way because I would have to remember what they mean. By
@@ -38,16 +39,13 @@ enum GameState {
  * This class represents the playable game. If you create an object from this
  * class, you have created an instance of the game, complete with JFrame, panel,
  * etc.
- *
+ * <p>
  * The class also has a main method so that the class can be run as an
  * application.
  *
  * @author basilvetas
  */
 public class Game implements Runnable {
-
-
-
 
     /* Static methods */
 
@@ -161,10 +159,12 @@ public class Game implements Runnable {
 
     public void initializeDifficulty(int difficultyIndex) {
         initializeDifficulty(Difficulty.fromIndex(difficultyIndex));
+        initializeVariables();
     }
 
     public void initializeDifficulty(String modeName) {
         initializeDifficulty(Difficulty.fromName(modeName));
+        initializeVariables();
     }
 
 
@@ -222,21 +222,10 @@ public class Game implements Runnable {
      * just sets up a game, then enters any valid game state.
      */
     protected void doSetupStuff() {
-        // Do setup tasks
-        // Create the JFrame and the JPanel
-        JFrame f = new JFrame();
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setTitle("Basil Vetas's qdev.unb.effect.tower.Tower Defense qdev.unb.Game");
-        f.setContentPane(gamePanel);
-        f.pack();
-        f.setVisible(true);
 
-        // creates a new qdev.unb.utils.ImageLoader object and loads the background image
-        ImageLoader loader = ImageLoader.getLoader();
-        backdrop = loader.getImage("stars.jpg");
-
-        String[] options = {"Easy", "Normal", "Hard"};
-        int difficulty = JOptionPane.showOptionDialog(null, "Choose difficulty level:", "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+        setupFrame();
+        loadBackDrop();
+        int difficulty = difficultyWindows();
 
         if (difficulty >= 0 && difficulty <= 2) {
             initializeDifficulty(difficulty);
@@ -244,44 +233,8 @@ public class Game implements Runnable {
             throw new AssertionError();
         }
 
-        JOptionPane.showMessageDialog(null, "Rules of the game:\n"
-                + "1. Place towers on the map to stop enemies from reaching the Earth.\n"
-                + "2. Black holes shoot star dust and are cheaper, Suns shoot sun spots and are faster.\n"
-                + "3. You earn money for stopping enemies, but as the game progresses, new enemies attack.\n"
-                + "4. If you stop " + killsToReach + " enemies you win, but if you lose " + livesCounter + " lives the game is over.");
-
-
-        // Use the loader to build a scanner on the path data text file, then build the
-        // path points object from the data in the file.
-        ClassLoader myLoader = this.getClass().getClassLoader();
-        InputStream pointStream = myLoader.getResourceAsStream("path_1.txt");
-        Scanner s = new Scanner(pointStream);
-        line = new PathPoints(s);
-
-        // Fill enemy list with new LinkedList
-        enemies = new LinkedList<Enemy>();
-
-        // Fill tower list with new LinkedList
-        towers = new LinkedList<Tower>();
-
-        // Fill effects list with new LinkedList
-        effects = new LinkedList<Effect>();
-
-        // initialize
-        placingBlackHole = false;
-        newBlackHole = null;
-
-        // initialize
-        placingSun = false;
-        newSun = null;
-
-        // initialize
-        placingMissile = false;
-        newMissile = null;
-
-        // initialize
-        gameIsOver = false;
-        gameIsWon = false;
+        showRules();
+        loadPathPoints();
 
         // Change the game state to start the game.
         state = GameState.UPDATE;  // You could also enter the 'DRAW' state.
@@ -294,45 +247,14 @@ public class Game implements Runnable {
      * responsible for the 'physics' of the game.
      */
     private void doUpdateTasks() {
-        if (gameIsOver) {
+        if (gameIsWon || gameIsOver) {
             state = GameState.DRAW;
             return;
         }
-
-        if (gameIsWon) {
-            state = GameState.DRAW;
-            return;
-        }
-
-        // See how long it was since the last frame.
-        long currentTime = System.currentTimeMillis();  // Integer number of milliseconds since 1/1/1970.
-        elapsedTime = ((currentTime - lastTime) / 1000.0);  // Compute elapsed seconds
-        lastTime = currentTime;  // Our current time is the next frame's last time
-
-        /* I think my elapsed time may be wrong */
-        // for each tower, interact in this game
-        for (Tower t : new LinkedList<Tower>(towers)) {
-            t.interact(this, elapsedTime);
-
-        }
-        // for each effect, interact in this game      
-        for (Effect e : new LinkedList<Effect>(effects)) {
-            e.interact(this, elapsedTime);
-            if (e.isDone()) {
-                effects.remove(e);    // add to list that has reached the end
-
-            }
-        }
-
-        // Advance each enemy on the path.
-        for (Enemy e : new LinkedList<Enemy>(enemies)) {
-            e.advance();
-            if (e.getPosition().isAtTheEnd()) {
-                enemies.remove(e);    // add to list that has reached the end
-                livesCounter--;        // if they have reached the end, reduce lives
-            }
-
-        }
+        updateElapsedTime();
+        updateTowers();
+        updateEffcts();
+        updateEnemies();
 
         // Fill elements in an enemy list
         this.generateEnemies();
@@ -340,20 +262,8 @@ public class Game implements Runnable {
         // increments frame counter
         frameCounter++;
 
-        // Place towers if user chooses
-        this.placeBlackHoles();
-        this.placeSuns();
-        this.placeMissiles();
-
-        if (livesCounter <= 0) {
-            gameIsOver = true;
-            livesCounter = 0;
-        }
-
-        if (killsCounter >= killsToReach) {
-            gameIsWon = true;
-            killsCounter = killsToReach;
-        }
+        handlePlacements();
+        checkEndConditions();
 
         // After we have updated the objects in the game, we need to
         //   redraw them.  Enter the 'DRAW' state.
@@ -374,113 +284,13 @@ public class Game implements Runnable {
         if (state != GameState.DRAW) {
             return;
         }
-
-        // Draw the background image.
-        g.drawImage(backdrop, 0, 0, null);
-
-        // Draw the path
-        g.setColor(new Color(0, 76, 153));
-        int[] xPos = new int[]{0, 64, 118, 251, 298, 344, 396, 416, 437, 459, 460, 498, 542, 600, 600, 568, 535, 509, 490, 481, 456, 414, 345, 287, 227, 98, 0};
-        int[] yPos = new int[]{329, 316, 291, 189, 163, 154, 165, 186, 233, 344, 364, 415, 444, 461, 410, 396, 372, 331, 226, 195, 151, 117, 105, 117, 143, 244, 280};
-        g.fillPolygon(xPos, yPos, 27);
-
-        // Draw planet 
-        g.setColor(new Color(65, 105, 225));
-        g.fillArc(550, 385, 100, 100, 90, 180);
-        g.setColor(Color.GREEN);
-        int[] xCor = new int[]{600, 588, 574, 566, 557, 557, 563, 572, 576, 584, 600};
-        int[] yCor = new int[]{459, 464, 462, 453, 454, 448, 438, 435, 422, 414, 415};
-        g.fillPolygon(xCor, yCor, 11);
-
-        // Draw the line along the path.
-        //line.drawLine(g);
-        // draw all enemies before menu bar
-        for (Enemy e : new LinkedList<Enemy>(enemies)) {
-            e.draw(g);
-        }
-
-        // draw all towers in list
-        for (Tower t : new LinkedList<Tower>(towers)) {
-            t.draw(g);
-        }
-
-        // draw all towers in list
-        for (Effect s : new LinkedList<Effect>(effects)) {
-            s.draw(g);
-        }
-
-        // draw menu bar
-        g.setColor(Color.WHITE);
-        g.fillRect(600, 0, 200, 700);
-
-        // draw score & life counters to menu bar
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Lucidia Sans", Font.BOLD, 16));
-        g.drawString("Lives Remaining: " + livesCounter, 610, 120);    // lives counter
-        g.drawString("Money Earned: " + scoreCounter, 610, 170);    // score counter
-        g.drawString("Enemies Stopped: " + killsCounter, 610, 220);
-        g.drawString("Blackhole Cost: 100", 650, 380);                // cost for black hole towers
-        g.drawString("qdev.unb.effect.tower.Sun Cost: 300", 650, 510);                // cost for sun towers
-        g.drawString("qdev.unb.tower.BlackHole.Missile Cost: 60", 650, 640);                // cost for missile towers
-        g.setFont(new Font("Lucidia Sans", Font.ITALIC, 28));
-        g.drawString("Planet Defense", 600, 50);                    // writes title
-        g.drawLine(600, 50, 800, 50);                                // underscore
-        g.drawString("Towers", 640, 250);                            // writes towers
-        g.drawLine(620, 250, 780, 250);                                // underscore
-
-        // draw box around blackhole icon
-        g.setColor(new Color(224, 224, 224));
-        g.fillRect(650, 260, 100, 100);
-
-        // draw tower in menu area
-        BlackHole blackhole = new BlackHole(new Coordinate(700, 300));
-        blackhole.draw(g);
-
-        // draw box around sun icon
-        g.setColor(new Color(224, 224, 224));
-        g.fillRect(650, 390, 100, 100);
-
-        // draw tower in menu area
-        Sun sun = new Sun(new Coordinate(700, 440));
-        sun.draw(g);
-
-        // draw box around missile icon
-        g.setColor(new Color(224, 224, 224));
-        g.fillRect(650, 520, 100, 100);
-
-        // draw missile in menu area
-        BlackHole.Missile missile = new BlackHole.Missile(new Coordinate(700, 570));
-        missile.draw(g);
-
-        // draws blackhole object with mouse movements
-        if (newBlackHole != null) {
-            newBlackHole.draw(g);
-        }
-
-        // draws sun object with mouse movements
-        if (newSun != null) {
-            newSun.draw(g);
-        }
-
-        // draws missile object with mouse movements
-        if (newMissile != null) {
-            newMissile.draw(g);
-        }
-
-        ImageLoader loader = ImageLoader.getLoader();
-        Image endGame = loader.getImage("game_over.png"); // load game over image
-
-        if (livesCounter <= 0) // if game is lost
-        {
-            g.drawImage(endGame, 0, 0, null);                        // draw "game over"
-        }
-        if (killsCounter >= killsToReach) // if game is won
-        {
-            g.setFont(new Font("Braggadocio", Font.ITALIC, 90));
-            g.drawString("You Win!!!", 10, 250);                    // draw "You Win!!!"
-        }
-
-
+        drawBackground(g);
+        drawPath(g);
+        drawPlanet(g);
+        drawEntities(g);
+        drawMenu(g);
+        drawMouseTowers(g);
+        drawEndGame(g);
         // Drawing is now complete.  Enter the WAIT state to create a small
         //   delay between frames.
         state = GameState.WAIT;
@@ -613,6 +423,267 @@ public class Game implements Runnable {
         if (newMissile != null) {
             newMissile.setPosition(mouseLocation);
         }
+    }
+
+    /**
+     * ==================================
+     * Methode utilisée dans doSetupStuff
+     * ===================================
+     */
+
+    private void setupFrame() {
+        // Do setup tasks
+        // Create the JFrame and the JPanel
+        JFrame f = new JFrame();
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setTitle("Basil Vetas's  Defense");
+        f.setContentPane(gamePanel);
+        f.pack();
+        f.setVisible(true);
+    }
+
+    private void loadBackDrop() {
+        // creates a new ImageLoader object and loads the background image
+        ImageLoader loader = ImageLoader.getLoader();
+        backdrop = loader.getImage("stars.jpg");
+    }
+
+    private int difficultyWindows() {
+        String[] options = {"Easy", "Normal", "Hard"};
+        return JOptionPane.showOptionDialog(null, "Choose difficulty level:", "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+    }
+
+    private void showRules() {
+        JOptionPane.showMessageDialog(null, "Rules of the game:\n"
+                + "1. Place towers on the map to stop enemies from reaching the Earth.\n"
+                + "2. Black holes shoot star dust and are cheaper, Suns shoot sun spots and are faster.\n"
+                + "3. You earn money for stopping enemies, but as the game progresses, new enemies attack.\n"
+                + "4. If you stop " + killsToReach + " enemies you win, but if you lose " + livesCounter + " lives the game is over.");
+    }
+
+    private void loadPathPoints() {
+        // Use the loader to build a scanner on the path data text file, then build the
+        // path points object from the data in the file.
+        ClassLoader myLoader = this.getClass().getClassLoader();
+        InputStream pointStream = myLoader.getResourceAsStream("path_1.txt");
+        Scanner s = new Scanner(pointStream);
+        line = new PathPoints(s);
+    }
+
+    private void initializeVariables() {
+        // Fill enemy list with new LinkedList
+        enemies = new LinkedList<Enemy>();
+
+        // Fill tower list with new LinkedList
+        towers = new LinkedList<Tower>();
+
+        // Fill effects list with new LinkedList
+        effects = new LinkedList<Effect>();
+
+        // initializeVariables
+        placingBlackHole = false;
+        newBlackHole = null;
+
+        // initializeVariables
+        placingSun = false;
+        newSun = null;
+
+        // initializeVariables
+        placingMissile = false;
+        newMissile = null;
+
+        // initializeVariables
+        gameIsOver = false;
+        gameIsWon = false;
+    }
+
+    /**
+     * ==================================
+     * Methode utilisée dans doUpdateTask
+     * ===================================
+     */
+
+    private void updateTowers() {
+        /* I think my elapsed time may be wrong */
+        // for each tower, interact in this game
+        for (Tower t : new LinkedList<Tower>(towers)) {
+            t.interact(this, elapsedTime);
+
+        }
+    }
+
+    private void updateElapsedTime() {
+        // See how long it was since the last frame.
+        long currentTime = System.currentTimeMillis();  // Integer number of milliseconds since 1/1/1970.
+        elapsedTime = ((currentTime - lastTime) / 1000.0);  // Compute elapsed seconds
+        lastTime = currentTime;  // Our current time is the next frame's last time
+    }
+
+    private void updateEffcts() {
+        // for each effect, interact in this game
+        for (Effect e : new LinkedList<Effect>(effects)) {
+            e.interact(this, elapsedTime);
+            if (e.isDone()) {
+                effects.remove(e);    // add to list that has reached the end
+
+            }
+        }
+    }
+
+    private void updateEnemies() {
+        // Advance each enemy on the path.
+        for (Enemy e : new LinkedList<Enemy>(enemies)) {
+            e.advance();
+            if (e.getPosition().isAtTheEnd()) {
+                enemies.remove(e);    // add to list that has reached the end
+                livesCounter--;        // if they have reached the end, reduce lives
+            }
+        }
+    }
+
+    private void handlePlacements() {
+        // Place towers if user chooses
+        this.placeBlackHoles();
+        this.placeSuns();
+        this.placeMissiles();
+    }
+
+    private void checkEndConditions() {
+        if (livesCounter <= 0) {
+            gameIsOver = true;
+            livesCounter = 0;
+        }
+
+        if (killsCounter >= killsToReach) {
+            gameIsWon = true;
+            killsCounter = killsToReach;
+        }
+    }
+
+    /**
+     * ==================================
+     * Methode utilisée dans draw
+     * ===================================
+     */
+
+    private void drawBackground(Graphics g) {
+        // Draw the background image.
+        g.drawImage(backdrop, 0, 0, null);
+    }
+
+    private void drawPath(Graphics g) {
+        // Draw the path
+        g.setColor(new Color(0, 76, 153));
+        int[] xPos = new int[]{0, 64, 118, 251, 298, 344, 396, 416, 437, 459, 460, 498, 542, 600, 600, 568, 535, 509, 490, 481, 456, 414, 345, 287, 227, 98, 0};
+        int[] yPos = new int[]{329, 316, 291, 189, 163, 154, 165, 186, 233, 344, 364, 415, 444, 461, 410, 396, 372, 331, 226, 195, 151, 117, 105, 117, 143, 244, 280};
+        g.fillPolygon(xPos, yPos, 27);
+    }
+
+    private void drawPlanet(Graphics g) {
+        // Draw planet
+        g.setColor(new Color(65, 105, 225));
+        g.fillArc(550, 385, 100, 100, 90, 180);
+        g.setColor(Color.GREEN);
+        int[] xCor = new int[]{600, 588, 574, 566, 557, 557, 563, 572, 576, 584, 600};
+        int[] yCor = new int[]{459, 464, 462, 453, 454, 448, 438, 435, 422, 414, 415};
+        g.fillPolygon(xCor, yCor, 11);
+    }
+
+    private void drawEntities(Graphics g) {
+        // Draw the line along the path.
+        //line.drawLine(g);
+        // draw all enemies before menu bar
+        for (Enemy e : new LinkedList<Enemy>(enemies)) {
+            e.draw(g);
+        }
+
+        // draw all towers in list
+        for (Tower t : new LinkedList<Tower>(towers)) {
+            t.draw(g);
+        }
+
+        // draw all towers in list
+        for (Effect s : new LinkedList<Effect>(effects)) {
+            s.draw(g);
+        }
+    }
+
+    private void drawMenu(Graphics g) {
+        // draw menu bar
+        g.setColor(Color.WHITE);
+        g.fillRect(600, 0, 300, 700);
+
+        // draw score & life counters to menu bar
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Lucidia Sans", Font.BOLD, 16));
+        g.drawString("Lives Remaining: " + livesCounter, 610, 120);    // lives counter
+        g.drawString("Money Earned: " + scoreCounter, 610, 170);    // score counter
+        g.drawString("Enemies Stopped: " + killsCounter, 610, 220);
+        g.drawString("Blackhole Cost: 100", 650, 380);                // cost for black hole towers
+        g.drawString("Sun Cost: 300", 650, 510);                // cost for sun towers
+        g.drawString("Missile Cost: 60", 650, 640);                // cost for missile towers
+        g.setFont(new Font("Lucidia Sans", Font.ITALIC, 28));
+        g.drawString("Planet Defense", 600, 50);                    // writes title
+        g.drawLine(600, 50, 800, 50);                                // underscore
+        g.drawString("Towers", 640, 250);                            // writes towers
+        g.drawLine(620, 250, 780, 250);                                // underscore
+
+        // draw box around blackhole icon
+        g.setColor(new Color(224, 224, 224));
+        g.fillRect(650, 260, 100, 100);
+
+        // draw tower in menu area
+        BlackHole blackhole = new BlackHole(new Coordinate(700, 300));
+        blackhole.draw(g);
+
+        // draw box around sun icon
+        g.setColor(new Color(224, 224, 224));
+        g.fillRect(650, 390, 100, 100);
+
+        // draw tower in menu area
+        Sun sun = new Sun(new Coordinate(700, 440));
+        sun.draw(g);
+
+        // draw box around missile icon
+        g.setColor(new Color(224, 224, 224));
+        g.fillRect(650, 520, 100, 100);
+
+        // draw missile in menu area
+        BlackHole.Missile missile = new BlackHole.Missile(new Coordinate(700, 570));
+        missile.draw(g);
+    }
+
+    private void drawMouseTowers(Graphics g) {
+        // draws blackhole object with mouse movements
+        if (newBlackHole != null) {
+            newBlackHole.draw(g);
+        }
+
+        // draws sun object with mouse movements
+        if (newSun != null) {
+            newSun.draw(g);
+        }
+
+        // draws missile object with mouse movements
+        if (newMissile != null) {
+            newMissile.draw(g);
+        }
+    }
+
+    private void drawEndGame(Graphics g) {
+        ImageLoader loader = ImageLoader.getLoader();
+        Image endGame = loader.getImage("game_over.png"); // load game over image
+
+        if (livesCounter <= 0) // if game is lost
+        {
+            g.drawImage(endGame, 0, 0, null);                        // draw "game over"
+        }
+        if (killsCounter >= killsToReach) // if game is won
+        {
+            g.setFont(new Font("Braggadocio", Font.ITALIC, 90));
+            g.drawString("You Win!!!", 10, 250);                    // draw "You Win!!!"
+        }
+
     }
 }
 
