@@ -1,3 +1,5 @@
+package qdev.unb.utils;
+
 import java.awt.Image;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +28,7 @@ public class ImageLoader
 	 * @param null
 	 * @return image loader
 	 */
-	static ImageLoader getLoader()
+	public static ImageLoader getLoader()
 	{	
 		if(instance == null)
 			instance = new ImageLoader();

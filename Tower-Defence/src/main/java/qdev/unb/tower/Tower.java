@@ -1,3 +1,8 @@
+package qdev.unb.tower;
+
+import qdev.unb.utils.Coordinate;
+import qdev.unb.Game;
+
 import java.awt.Graphics;
 import java.awt.Image;
 
@@ -18,7 +23,7 @@ abstract public class Tower
 		// Draws tower object to location specified by user
 		g.drawImage(tower, position.getX() + anchorX, position.getY() + anchorY, null);
 		
-		// Draws dot on Enemy's (x, y) coordinates
+		// Draws dot on qdev.unb.entities.Enemy's (x, y) coordinates
 		//g.setColor(Color.WHITE);
 		//g.fillOval(position.getX(), position.getY(), 5, 5);	
 	}
@@ -31,7 +36,11 @@ abstract public class Tower
 		position = c;
 	}
 	
-	abstract void interact(Game game, double deltaTime);
+	public abstract void interact(Game game, double deltaTime);
+
+	public void setTimeSinceLastFire(double t) {
+		this.timeSinceLastFire = t;
+	}
 }
 
 

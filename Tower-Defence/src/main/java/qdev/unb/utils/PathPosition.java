@@ -1,7 +1,9 @@
+package qdev.unb.utils;
+
 import java.util.List;
 
 /**
- * A PathPosition object represents a single position along a segmented path.
+ * A qdev.unb.utils.PathPosition object represents a single position along a segmented path.
  * The position can be advanced along the path, and can be converted into an (x, y) coordinate.
  * 
  * Has three components that make up the position: the path that the object is on, the segment
@@ -19,7 +21,7 @@ public class PathPosition
 	 * 
 	 * @param path
 	 */
-	PathPosition(List<Coordinate> points)
+	public PathPosition(List<Coordinate> points)
 	{	// Initializes variables
 		
 		this.segment = 0;		//starting segment
@@ -45,7 +47,7 @@ public class PathPosition
      * is built containing the (x, y) location, and the coordinate
      * is returned.
      * 
-     * @return A Coordinate object containing the (x, y) location of this position
+     * @return A qdev.unb.utils.Coordinate object containing the (x, y) location of this position
      */
     public Coordinate getCoordinate ()
     {	

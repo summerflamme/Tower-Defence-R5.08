@@ -1,3 +1,8 @@
+package qdev.unb.enemy;
+
+import qdev.unb.utils.ImageLoader;
+import qdev.unb.utils.PathPosition;
+
 /**
  * This class creates a single comet enemy
  */
@@ -6,7 +11,7 @@ public class Comet extends Enemy
 	/**
 	 * Constructor
 	 */
-	Comet(PathPosition p)
+    public Comet(PathPosition p)
 	{
 		ImageLoader loader = ImageLoader.getLoader();
 		this.enemy = loader.getImage("comet.png");

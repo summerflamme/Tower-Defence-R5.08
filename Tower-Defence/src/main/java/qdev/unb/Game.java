@@ -1,3 +1,14 @@
+package qdev.unb;
+
+import qdev.unb.effect.Effect;
+import qdev.unb.tower.BlackHole;
+import qdev.unb.tower.Sun;
+import qdev.unb.tower.Tower;
+import qdev.unb.enemy.*;
+import qdev.unb.utils.Coordinate;
+import qdev.unb.utils.GamePanel;
+import qdev.unb.utils.ImageLoader;
+import qdev.unb.utils.PathPoints;
 
 import java.awt.*;
 import java.io.InputStream;
@@ -10,7 +21,7 @@ import javax.swing.JOptionPane;
 /* The class begins below the enum. */
 /**
  * This 'enum' just creates a new type of data (like int or char). The type is
- * 'GameState', and the legal values are shown below. We can create variables of
+ * 'qdev.unb.GameState', and the legal values are shown below. We can create variables of
  * this type, and we can store the values shown below into those variables.
  *
  * The alternative would have been to use integers to represent states. For
@@ -35,7 +46,11 @@ enum GameState {
  */
 public class Game implements Runnable {
 
+
+
+
     /* Static methods */
+
     /**
      * The entry point for the game.
      *
@@ -53,64 +68,105 @@ public class Game implements Runnable {
     }
 
     /* Object fields and methods */
-    private Image backdrop;				// background star image
-    private PathPoints line;			// path coordinates
+    private Image backdrop;                // background star image
+    private PathPoints line;            // path coordinates
 
-    private GamePanel gamePanel;		// gamePanel object
-    private GameState state;	   		// The current game state
+    private GamePanel gamePanel;        // gamePanel object
+    private GameState state;            // The current game state
 
-    private int frameCounter;			// keeps track of frame updates
-    private long lastTime;				// keeps track of time
+    private int frameCounter;            // keeps track of frame updates
+    private long lastTime;                // keeps track of time
 
-    private boolean placingBlackHole;	// true if tower is being placed
-    private Tower newBlackHole; 		// variable to hold new tower objects
-    private double elapsedTime;			// time trackers
+    private boolean placingBlackHole;    // true if tower is being placed
+    private Tower newBlackHole;        // variable to hold new tower objects
+    private double elapsedTime;            // time trackers
 
-    private boolean placingSun;			// true if tower is being placed
-    private Tower newSun; 				// variable to hold new tower objects
+    private boolean placingSun;            // true if tower is being placed
+    private Tower newSun;                // variable to hold new tower objects
 
-    private boolean placingMissile;	// true if tower is being placed
-    private Tower newMissile; 		// variable to hold new tower objects
+    private boolean placingMissile;    // true if tower is being placed
+    private Tower newMissile;        // variable to hold new tower objects
 
-    private boolean gameIsOver;			// indicates if game is lost
-    private boolean gameIsWon;			// indicates if game is won
+    private boolean gameIsOver;            // indicates if game is lost
+    private boolean gameIsWon;            // indicates if game is won
 
-    int livesCounter; 					// counter for lives left
-    int scoreCounter;					// points the user earns
-    int killsCounter;					// number of enemies destroyed
-    int killsToReach;					// number of enemies to stop to win
+    public int livesCounter;                    // counter for lives left
+    public int scoreCounter;                    // points the user earns
+    public int killsCounter;                    // number of enemies destroyed
+    public int killsToReach;                    // number of enemies to stop to win
 
     /* create enemies */
-    List<Enemy> enemies;				// list of enemy objects
+    public List<Enemy> enemies;                // list of enemy objects
 
     /* create towers */
-    List<Tower> towers;					// list of tower objects
+    List<Tower> towers;                    // list of tower objects
 
     /* create effects */
-    List<Effect> effects;				// list of effect objects
+    public List<Effect> effects;                // list of effect objects
 
     // You will declare other variables here.  These variables will last for
     //   the lifetime of the game, so don't store temporary values or loop counters
     //   here.
+
     /**
      * Constructor: Builds a thread of execution, then starts it on 'this'
      * object. This extra thread of execution will be responsible for doing all
      * the work of creating, running, and playing the game.
-     *
+     * <p>
      * (Note: Drawing the screen happens inside of -another- thread of execution
      * controlled by Java. Fortunately, we don't care, but we are aware that
      * some other threads do exist.)
      */
-    public Game() {
-        // The game starts in the SETUP state.
 
+    public Game(boolean startGui) {
         state = GameState.SETUP;
-        gamePanel = new GamePanel(this);
-        // Create a thread of execution and run it.
-
-        Thread t = new Thread(this);
-        t.start();  // Our run method is now executing!!!
+        if (startGui) {
+            gamePanel = new GamePanel(this);
+            Thread t = new Thread(this);
+            t.start();
+        } else {
+            gamePanel = null;
+        }
     }
+
+    public Game() {
+        this(true);
+    }
+
+    public void initializeDifficulty(Difficulty d) {
+        this.livesCounter = d.lives;
+        this.scoreCounter = d.money;
+        this.killsToReach = d.killsToReach;
+
+        this.killsCounter = 0;
+        this.frameCounter = 0;
+        this.lastTime = System.currentTimeMillis();
+
+        this.enemies = new LinkedList<>();
+        this.towers = new LinkedList<>();
+        this.effects = new LinkedList<>();
+
+        this.placingBlackHole = false;
+        this.newBlackHole = null;
+        this.placingSun = false;
+        this.newSun = null;
+        this.placingMissile = false;
+        this.newMissile = null;
+
+        this.gameIsOver = false;
+        this.gameIsWon = false;
+
+        this.state = GameState.UPDATE;
+    }
+
+    public void initializeDifficulty(int difficultyIndex) {
+        initializeDifficulty(Difficulty.fromIndex(difficultyIndex));
+    }
+
+    public void initializeDifficulty(String modeName) {
+        initializeDifficulty(Difficulty.fromName(modeName));
+    }
+
 
     /**
      * The entry point for the second thread of execution. Our game loop is
@@ -165,44 +221,27 @@ public class Game implements Runnable {
      * This setup function is called when the game is in the UPDATE state. It
      * just sets up a game, then enters any valid game state.
      */
-    private void doSetupStuff() {
+    protected void doSetupStuff() {
         // Do setup tasks
         // Create the JFrame and the JPanel
         JFrame f = new JFrame();
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setTitle("Basil Vetas's Tower Defense Game");
+        f.setTitle("Basil Vetas's qdev.unb.effect.tower.Tower Defense qdev.unb.Game");
         f.setContentPane(gamePanel);
         f.pack();
         f.setVisible(true);
 
-        // creates a new ImageLoader object and loads the background image
+        // creates a new qdev.unb.utils.ImageLoader object and loads the background image
         ImageLoader loader = ImageLoader.getLoader();
         backdrop = loader.getImage("stars.jpg");
 
         String[] options = {"Easy", "Normal", "Hard"};
         int difficulty = JOptionPane.showOptionDialog(null, "Choose difficulty level:", "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
 
-        switch (difficulty) {
-            case 0 -> {
-                // Easy difficulty
-                livesCounter = 20;
-                scoreCounter = 400;
-                killsToReach = 250;
-            }
-            case 1 -> {
-                // Normal difficulty
-                livesCounter = 10;      // gives the player 10 lives
-                scoreCounter = 200;     // give the user 200 points to begin
-                killsToReach = 500;     // player must stop 500 enemies to win
-            }
-            case 2 -> {
-                // Hard difficulty
-                livesCounter = 5;
-                scoreCounter = 100;
-                killsToReach = 1000;
-            }
-            default ->
-                throw new AssertionError();
+        if (difficulty >= 0 && difficulty <= 2) {
+            initializeDifficulty(difficulty);
+        } else {
+            throw new AssertionError();
         }
 
         JOptionPane.showMessageDialog(null, "Rules of the game:\n"
@@ -211,12 +250,6 @@ public class Game implements Runnable {
                 + "3. You earn money for stopping enemies, but as the game progresses, new enemies attack.\n"
                 + "4. If you stop " + killsToReach + " enemies you win, but if you lose " + livesCounter + " lives the game is over.");
 
-        // fill counters
-        killsCounter = 0;		// begin with 0 kills
-
-        // Reset the frame counter and time
-        frameCounter = 0;
-        lastTime = System.currentTimeMillis();
 
         // Use the loader to build a scanner on the path data text file, then build the
         // path points object from the data in the file.
@@ -286,7 +319,7 @@ public class Game implements Runnable {
         for (Effect e : new LinkedList<Effect>(effects)) {
             e.interact(this, elapsedTime);
             if (e.isDone()) {
-                effects.remove(e);	// add to list that has reached the end	
+                effects.remove(e);    // add to list that has reached the end
 
             }
         }
@@ -295,8 +328,8 @@ public class Game implements Runnable {
         for (Enemy e : new LinkedList<Enemy>(enemies)) {
             e.advance();
             if (e.getPosition().isAtTheEnd()) {
-                enemies.remove(e);	// add to list that has reached the end
-                livesCounter--;		// if they have reached the end, reduce lives
+                enemies.remove(e);    // add to list that has reached the end
+                livesCounter--;        // if they have reached the end, reduce lives
             }
 
         }
@@ -383,17 +416,17 @@ public class Game implements Runnable {
         // draw score & life counters to menu bar
         g.setColor(Color.BLACK);
         g.setFont(new Font("Lucidia Sans", Font.BOLD, 16));
-        g.drawString("Lives Remaining: " + livesCounter, 610, 120);	// lives counter
-        g.drawString("Money Earned: " + scoreCounter, 610, 170);	// score counter
+        g.drawString("Lives Remaining: " + livesCounter, 610, 120);    // lives counter
+        g.drawString("Money Earned: " + scoreCounter, 610, 170);    // score counter
         g.drawString("Enemies Stopped: " + killsCounter, 610, 220);
-        g.drawString("Blackhole Cost: 100", 650, 380);				// cost for black hole towers
-        g.drawString("Sun Cost: 300", 650, 510);				// cost for sun towers
-        g.drawString("Missile Cost: 60", 650, 640);				// cost for missile towers
+        g.drawString("Blackhole Cost: 100", 650, 380);                // cost for black hole towers
+        g.drawString("qdev.unb.effect.tower.Sun Cost: 300", 650, 510);                // cost for sun towers
+        g.drawString("qdev.unb.tower.BlackHole.Missile Cost: 60", 650, 640);                // cost for missile towers
         g.setFont(new Font("Lucidia Sans", Font.ITALIC, 28));
-        g.drawString("Planet Defense", 600, 50);					// writes title
-        g.drawLine(600, 50, 800, 50);								// underscore
-        g.drawString("Towers", 640, 250);							// writes towers
-        g.drawLine(620, 250, 780, 250);								// underscore	
+        g.drawString("Planet Defense", 600, 50);                    // writes title
+        g.drawLine(600, 50, 800, 50);                                // underscore
+        g.drawString("Towers", 640, 250);                            // writes towers
+        g.drawLine(620, 250, 780, 250);                                // underscore
 
         // draw box around blackhole icon
         g.setColor(new Color(224, 224, 224));
@@ -416,7 +449,7 @@ public class Game implements Runnable {
         g.fillRect(650, 520, 100, 100);
 
         // draw missile in menu area
-        Missile missile = new Missile(new Coordinate(700, 570));
+        BlackHole.Missile missile = new BlackHole.Missile(new Coordinate(700, 570));
         missile.draw(g);
 
         // draws blackhole object with mouse movements
@@ -439,13 +472,14 @@ public class Game implements Runnable {
 
         if (livesCounter <= 0) // if game is lost
         {
-            g.drawImage(endGame, 0, 0, null);						// draw "game over"
+            g.drawImage(endGame, 0, 0, null);                        // draw "game over"
         }
         if (killsCounter >= killsToReach) // if game is won
         {
             g.setFont(new Font("Braggadocio", Font.ITALIC, 90));
-            g.drawString("You Win!!!", 10, 250);					// draw "You Win!!!"
+            g.drawString("You Win!!!", 10, 250);                    // draw "You Win!!!"
         }
+
 
         // Drawing is now complete.  Enter the WAIT state to create a small
         //   delay between frames.
@@ -497,13 +531,13 @@ public class Game implements Runnable {
         // moves the tower object as mouse moves
         if (gamePanel.mouseX > 650 && gamePanel.mouseX < 750
                 && gamePanel.mouseY > 260 && gamePanel.mouseY < 360
-                && gamePanel.mouseIsPressed && scoreCounter >= 100) {	// if mouse is pressed on tower icon, create a new object
+                && gamePanel.mouseIsPressed && scoreCounter >= 100) {    // if mouse is pressed on tower icon, create a new object
             placingBlackHole = true;
             newBlackHole = new BlackHole(mouseLocation);
         } else if (gamePanel.mouseX > 0 && gamePanel.mouseX < 600
                 && gamePanel.mouseY > 0 && gamePanel.mouseY < 600
                 && gamePanel.mouseIsPressed && placingBlackHole
-                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {	// if mouse is pressed on game screen, place tower on game screen
+                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {    // if mouse is pressed on game screen, place tower on game screen
             newBlackHole.setPosition(mouseLocation);
             towers.add(new BlackHole(mouseLocation));
             scoreCounter -= 100;
@@ -529,13 +563,13 @@ public class Game implements Runnable {
         // moves the tower object as mouse moves
         if (gamePanel.mouseX > 650 && gamePanel.mouseX < 750
                 && gamePanel.mouseY > 390 && gamePanel.mouseY < 490
-                && gamePanel.mouseIsPressed && scoreCounter >= 300) {	// if mouse is pressed on tower icon, create a new object
+                && gamePanel.mouseIsPressed && scoreCounter >= 300) {    // if mouse is pressed on tower icon, create a new object
             placingSun = true;
             newSun = new Sun(mouseLocation);
         } else if (gamePanel.mouseX > 0 && gamePanel.mouseX < 600
                 && gamePanel.mouseY > 0 && gamePanel.mouseY < 600
                 && gamePanel.mouseIsPressed && placingSun
-                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {	// if mouse is pressed on game screen, place tower on game screen
+                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {    // if mouse is pressed on game screen, place tower on game screen
             newSun.setPosition(mouseLocation);
             towers.add(new Sun(mouseLocation));
             scoreCounter -= 300;
@@ -561,15 +595,15 @@ public class Game implements Runnable {
         // moves the tower object as mouse moves
         if (gamePanel.mouseX > 650 && gamePanel.mouseX < 750
                 && gamePanel.mouseY > 520 && gamePanel.mouseY < 620
-                && gamePanel.mouseIsPressed && scoreCounter >= 60) {	// if mouse is pressed on tower icon, create a new object
+                && gamePanel.mouseIsPressed && scoreCounter >= 60) {    // if mouse is pressed on tower icon, create a new object
             placingMissile = true;
-            newMissile = new Missile(mouseLocation);
+            newMissile = new BlackHole.Missile(mouseLocation);
         } else if (gamePanel.mouseX > 0 && gamePanel.mouseX < 600
                 && gamePanel.mouseY > 0 && gamePanel.mouseY < 600
                 && gamePanel.mouseIsPressed && placingMissile
-                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {	// if mouse is pressed on game screen, place tower on game screen
+                && line.distanceToPath(gamePanel.mouseX, gamePanel.mouseY) > 60) {    // if mouse is pressed on game screen, place tower on game screen
             newMissile.setPosition(mouseLocation);
-            towers.add(new Missile(mouseLocation));
+            towers.add(new BlackHole.Missile(mouseLocation));
             scoreCounter -= 60;
             newMissile = null;
             placingMissile = false;
@@ -581,3 +615,4 @@ public class Game implements Runnable {
         }
     }
 }
+

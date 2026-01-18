@@ -1,6 +1,10 @@
+package qdev.unb.effect;
+
+import qdev.unb.utils.Coordinate;
+import qdev.unb.utils.ImageLoader;
 
 /**
- * Game effect when the Missile attacks
+ * qdev.unb.Game effect when the qdev.unb.tower.BlackHole.Missile attacks
  */
 public class Flamme extends Effect {
 
@@ -9,7 +13,7 @@ public class Flamme extends Effect {
         ImageLoader loader = ImageLoader.getLoader();
         this.picture = loader.getImage("flamme.png");
 
-        // X and Y position of Effect
+        // X and Y position of qdev.unb.effect.Effect
         this.posX = pos.x;
         this.posY = pos.y;
 

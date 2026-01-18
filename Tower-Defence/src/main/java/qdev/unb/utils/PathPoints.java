@@ -1,17 +1,19 @@
+package qdev.unb.utils;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.*;
 
 /**
  * /**
- * A PathPoints object represents a list of coordinates along a path.
+ * A qdev.unb.utils.PathPoints object represents a list of coordinates along a path.
  * This is really just a helper class for loading path points,
  * drawing the path, and for creating coordinates at the start of a path.
  * It serves no other purpose.
  */
 public class PathPoints 
 {
-	// Each PathPoints object will have a list of coordinates:
+	// Each qdev.unb.utils.PathPoints object will have a list of coordinates:
 	private List <Coordinate> path;
 	
 	/** This constructor does the following:

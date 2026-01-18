@@ -1,6 +1,10 @@
+package qdev.unb.effect;
+
+import qdev.unb.utils.Coordinate;
+import qdev.unb.utils.ImageLoader;
 
 /**
- * Game effect when the Black hole attacks
+ * qdev.unb.Game effect when the Black hole attacks
  */
 public class StarDust extends Effect {
 
@@ -9,7 +13,7 @@ public class StarDust extends Effect {
         ImageLoader loader = ImageLoader.getLoader();
         this.picture = loader.getImage("star_dust.png");
 
-        // X and Y position of Effect
+        // X and Y position of qdev.unb.effect.Effect
         this.posX = pos.x;
         this.posY = pos.y;
 

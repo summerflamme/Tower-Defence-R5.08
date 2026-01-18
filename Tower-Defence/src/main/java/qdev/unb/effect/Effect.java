@@ -1,3 +1,7 @@
+package qdev.unb.effect;
+
+import qdev.unb.Game;
+import qdev.unb.enemy.Enemy;
 
 import java.awt.Graphics;
 import java.awt.Image;
@@ -19,7 +23,7 @@ abstract public class Effect {
         // Increments time
         ageInSeconds += deltaTime;
 
-        // Sets new position of Effect
+        // Sets new position of qdev.unb.effect.Effect
         posX += velocityX * deltaTime;
         posY += velocityY * deltaTime;
 
@@ -30,8 +34,8 @@ abstract public class Effect {
             double dx, dy, dist;	// change in x, y, and total distance
 
             // calculates change in x and y position 
-            dx = e.position.getCoordinate().x - posX; // x position of enemy - effect 
-            dy = e.position.getCoordinate().y - posY; // y position of enemy - effect 
+            dx = e.getPosition().getCoordinate().x - posX; // x position of enemy - effect
+            dy = e.getPosition().getCoordinate().y - posY; // y position of enemy - effect
 
             // use Pythagorean theorem to calculate distance
             dist = Math.sqrt((dx * dx) + (dy * dy));
@@ -49,7 +53,7 @@ abstract public class Effect {
         // Draws effect
         g.drawImage(picture, posX, posY, null);
 
-        // Draws dot on Effect's (x, y) coordinates
+        // Draws dot on qdev.unb.effect.Effect's (x, y) coordinates
         //g.setColor(Color.WHITE);
         //g.fillOval(posX, posY, 5, 5);
     }
