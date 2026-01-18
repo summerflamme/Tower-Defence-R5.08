@@ -1,4 +1,4 @@
-package qdev.unb;
+package qdev.unb.utils;
 
 public enum Difficulty {
     EASY(0, 20, 400, 250),

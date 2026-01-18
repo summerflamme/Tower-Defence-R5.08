@@ -5,10 +5,7 @@ import qdev.unb.tower.BlackHole;
 import qdev.unb.tower.Sun;
 import qdev.unb.tower.Tower;
 import qdev.unb.enemy.*;
-import qdev.unb.utils.Coordinate;
-import qdev.unb.utils.GamePanel;
-import qdev.unb.utils.ImageLoader;
-import qdev.unb.utils.PathPoints;
+import qdev.unb.utils.*;
 
 import java.awt.*;
 import java.io.InputStream;
